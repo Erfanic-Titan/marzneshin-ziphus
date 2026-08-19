@@ -340,6 +340,12 @@ def create_config(
         fingerprint=host.fingerprint.value or inbound.get("fp"),
         reality_pbk=inbound.get("pbk"),
         reality_sid=inbound.get("sid"),
+        reality_spx=host.reality_spx,
+        # derived by marznode from the inbound's mldsa65Seed
+        reality_pqv=inbound.get("pqv"),
+        # derived by marznode from the inbound's decryption; the host column is
+        # an override, so it follows the same host-then-inbound rule as the rest
+        encryption=host.encryption or inbound.get("encryption"),
         client_address=calculate_client_address(
             inbound.get("address"), user_id
         ),

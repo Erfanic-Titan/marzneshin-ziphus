@@ -372,6 +372,10 @@ class InboundHost(Base):
     header_type = Column(String(32))
     reality_public_key = Column(String(128))
     reality_short_ids = Column(JSON())
+    reality_spx = Column(String(256))
+    # client-side VLESS Encryption. normally inherited from the inbound, which
+    # derives it from its own "decryption"; set here only to override.
+    encryption = Column(Text())
     flow = Column(String(32))
     shadowtls_version = Column(Integer)
     shadowsocks_method = Column(String(32))

@@ -22,7 +22,10 @@ xxhash==3.4.1
 grpcio==1.69.0
 psycopg==3.1.18
 psycopg-binary==3.1.18
-v2share==0.1.0b31
+# v2share is vendored from our fork by Dockerfile.panel in the parent repo.
+# The PyPI release (0.1.0b31, 2025-03-04) is abandoned and has no support for
+# VLESS Encryption or REALITY post-quantum verification.
+# v2share==0.1.0b31
 PyJWT~=2.8.0
 PyNaCl==1.5.0
 starlette==0.41.3
