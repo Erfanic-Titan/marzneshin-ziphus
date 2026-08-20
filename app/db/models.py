@@ -299,7 +299,10 @@ class Inbound(Base):
     id = Column(Integer, primary_key=True)
     protocol = Column(Enum(ProxyTypes))
     tag = Column(String(256), nullable=False)
-    config = Column(String(512), nullable=False)
+    # Text, not String(512): a REALITY inbound carrying an ML-DSA-65 verify
+    # key is ~3300 bytes on its own, and marznode also passes the raw
+    # streamSettings through so new core fields need no schema change.
+    config = Column(Text(), nullable=False)
     node_id = Column(Integer, ForeignKey("nodes.id"), index=True)
     node = relationship("Node", back_populates="inbounds")
     services = relationship(

@@ -86,8 +86,17 @@ class MarzNodeGRPCLIB(MarzNodeBase, MarzNodeDB):
                 if not self.synced:
                     try:
                         await self._sync()
-                    except:
-                        pass
+                    except Exception as exc:
+                        # a bare `except: pass` used to hide this, which left the
+                        # node stuck on whatever status it had before with no
+                        # clue anywhere as to why it never went healthy
+                        logger.error(
+                            "node %i failed to sync: %s: %s",
+                            self.id,
+                            type(exc).__name__,
+                            exc,
+                        )
+                        self.set_status(NodeStatus.unhealthy, str(exc) or type(exc).__name__)
                     else:
                         self._streaming_task = asyncio.create_task(
                             self._stream_user_updates()
