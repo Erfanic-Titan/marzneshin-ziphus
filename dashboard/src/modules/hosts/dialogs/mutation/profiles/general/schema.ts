@@ -80,6 +80,10 @@ export const GeneralSchema = HostSchema.merge(TlsSchema).extend({
     http_headers: z.any().nullable().optional().default(null),
     fragment: FragmentSchema.nullable().optional().default(null),
     fingerprint: FingerprintSchema.optional().default("none"),
+    // REALITY spiderX and the client half of VLESS Encryption. Both are free
+    // strings the core accepts verbatim, so no enum here on purpose.
+    reality_spx: z.string().nullable().optional().default(null),
+    encryption: z.string().nullable().optional().default(null),
     splithttp_settings: SplitHttpSettingsSchema.nullable()
         .optional()
         .default(null),

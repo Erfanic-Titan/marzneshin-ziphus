@@ -432,5 +432,7 @@
     "unhealthy": "Unhealthy",
     "limited": "Limited",
     "error": "Error"
-  }
+  },
+  "reality-spx": "REALITY spiderX",
+  "vless-encryption": "VLESS Encryption (leave empty to inherit from the inbound)"
 }

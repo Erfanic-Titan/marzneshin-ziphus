@@ -16,5 +16,7 @@ export const generalProfileDefaultValue: GeneralSchemaType = {
     alpn: "none",
     allowinsecure: false,
     fingerprint: "none",
+    reality_spx: null,
+    encryption: null,
     is_disabled: false,
 };

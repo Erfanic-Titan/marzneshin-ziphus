@@ -39,6 +39,7 @@ from app.models.proxy import (
     InboundHostSecurity,
     SplitHttpSettings,
     MuxSettings,
+    XMuxSettings,
 )
 from app.models.settings import SubscriptionSettings
 from app.models.user import UserResponse, UserExpireStrategy
@@ -261,6 +262,27 @@ def generate_user_configs(
     return configs
 
 
+# xray writes xmux in camelCase inside streamSettings.extra; the panel's model
+# uses snake_case. Anything we do not recognise is dropped rather than passed
+# through, because XMuxSettings validates each value against a pattern.
+_XMUX_MAP = {
+    "maxConcurrency": "max_concurrency",
+    "maxConnections": "max_connections",
+    "cMaxReuseTimes": "max_reuse_times",
+    "cMaxLifetimeMs": "max_lifetime",
+    "hMaxRequestTimes": "max_request_times",
+    "hKeepAlivePeriod": "keep_alive_period",
+}
+
+
+def _XMUX_FIELDS(xmux: dict) -> dict:
+    return {
+        _XMUX_MAP[k]: (v if k == "hKeepAlivePeriod" else str(v))
+        for k, v in xmux.items()
+        if k in _XMUX_MAP and v is not None
+    }
+
+
 def create_config(
     host, key, format_variables, salt, user_id, next_hosts: list | None = None
 ):
@@ -315,6 +337,19 @@ def create_config(
         if host.splithttp_settings
         else None
     )
+    # Fall back to what marznode read off the inbound. Without this an admin who
+    # never opened the host's XHTTP section shipped a link with no "mode", and
+    # the client silently picked stream-one against an "auto" server - the
+    # handshake then failed with a bare EOF on the first POST.
+    if splithttp_settings is None and inbound.get("xhttp_mode"):
+        extra = inbound.get("xhttp_extra") or {}
+        xmux = inbound.get("xhttp_xmux")
+        splithttp_settings = SplitHttpSettings(
+            mode=inbound["xhttp_mode"],
+            no_grpc_header=extra.get("noGRPCHeader"),
+            padding_bytes=extra.get("xPaddingBytes"),
+            xmux=XMuxSettings(**_XMUX_FIELDS(xmux)) if xmux else None,
+        )
     mux_settings = (
         MuxSettings.model_validate(host.mux_settings)
         if host.mux_settings
@@ -331,7 +366,8 @@ def create_config(
         host=req_host,
         tls=host_tls or inbound.get("tls"),
         header_type=host.header_type or inbound.get("header_type"),
-        alpn=host.alpn if host.alpn != "none" else None,
+        alpn=(host.alpn if host.alpn != "none" else None)
+        or (",".join(a) if (a := inbound.get("alpn")) else None),
         path=(
             host.path.format_map(format_variables)
             if host.path

@@ -13,6 +13,11 @@ export const TlsFields: FC = () => {
         >
             <ClearableTextField name="sni" label={t("sni")} />
             <AlpnField />
+            <ClearableTextField name="reality_spx" label={t("reality-spx")} />
+            <ClearableTextField
+                name="encryption"
+                label={t("vless-encryption")}
+            />
             <AllowInsecureField />
         </SettingSection>
     );

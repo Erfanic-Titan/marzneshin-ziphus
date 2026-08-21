@@ -323,5 +323,7 @@
     "unhealthy": "ناسالم",
     "limited": "محدود شده",
     "error": "خطا"
-  }
+  },
+  "reality-spx": "اسپایدرایکسِ REALITY",
+  "vless-encryption": "رمزنگاریِ VLESS (خالی بگذارید تا از اینباند بیاید)"
 }
