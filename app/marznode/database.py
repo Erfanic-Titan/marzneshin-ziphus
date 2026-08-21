@@ -22,6 +22,15 @@ class MarzNodeDB:
         with GetDB() as db:
             crud.ensure_node_backends(db, backends, self.id)
             crud.ensure_node_inbounds(db, inbounds, self.id)
+            # nodes.xray_version has a column and an API field but nothing ever
+            # wrote to it, so every node reported a null core version - which is
+            # exactly the thing you want to read before touching a node.
+            version = next(
+                (b.version for b in backends if b.type == "xray" and b.version),
+                None,
+            )
+            if version:
+                crud.update_node_version(db, self.id, version)
 
     def set_status(self, status: NodeStatus, message: str | None = None):
         with GetDB() as db:

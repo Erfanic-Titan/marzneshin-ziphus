@@ -1040,6 +1040,13 @@ def update_node(db: Session, dbnode: Node, modify: NodeModify):
     return dbnode
 
 
+def update_node_version(db: Session, node_id: int, version: str):
+    db_node = db.query(Node).where(Node.id == node_id).first()
+    if db_node and db_node.xray_version != version:
+        db_node.xray_version = version
+        db.commit()
+
+
 def update_node_status(
     db: Session,
     node_id: int,
@@ -1051,5 +1058,12 @@ def update_node_status(
     db_node.status = status
     if message:
         db_node.message = message
+    elif status == NodeStatus.healthy:
+        # `if message:` alone never cleared anything, so a node that recovered
+        # kept displaying the error that took it down - operators were reading a
+        # healthy node's panel entry and seeing a failure from days earlier.
+        db_node.message = None
+    if version:
+        db_node.xray_version = version
     db_node.last_status_change = datetime.utcnow()
     db.commit()
