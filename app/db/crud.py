@@ -1,4 +1,5 @@
 import json
+import logging
 import secrets
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -43,6 +44,8 @@ from app.models.user import (
 )
 
 
+logger = logging.getLogger(__name__)
+
 def add_default_hosts(db: Session, inbounds: List[Inbound]):
     hosts = [
         InboundHost(
@@ -82,6 +85,22 @@ def ensure_node_inbounds(db: Session, inbounds: List[Inbound], node_id: int):
     ]
     updated_tags = set(i.tag for i in list(inbounds))
     inbound_additions, tag_deletions = list(), set()
+
+    # A node that reports NO inbounds at all is almost never an admin who
+    # deleted them: it is a node whose backend is down or mid-restart. Deleting
+    # them here cascades into service_inbounds and hosts, so the services go
+    # empty, every host is gone, and users silently receive no config - and
+    # when the node comes back the inbounds are re-created with NEW ids, so
+    # nothing reattaches itself. Keep what we have and wait for a real report.
+    if not updated_tags and current_tags:
+        logger.warning(
+            "node %s reported no inbounds while %d are on record; "
+            "keeping them rather than cascading the deletion",
+            node_id,
+            len(current_tags),
+        )
+        return
+
     for tag in current_tags:
         if tag not in updated_tags:
             tag_deletions.add(tag)

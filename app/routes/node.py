@@ -220,16 +220,28 @@ async def alter_node_xray_config(
         raise HTTPException(status_code=404, detail="Node not found")
 
     try:
+        # A restart stops xray, reloads the config and re-adds every user, so
+        # five seconds was optimistic on a node with real traffic: the call
+        # timed out, the admin saw "No response from the node", and the restart
+        # carried on regardless - leaving the UI claiming a failure that had
+        # actually succeeded.
         await asyncio.wait_for(
             node.restart_backend(
                 name=backend,
                 config=config.config,
                 config_format=config.format.value,
             ),
-            5,
+            30,
         )
-    except:
+    except asyncio.TimeoutError:
         raise HTTPException(
-            status_code=502, detail="No response from the node."
+            status_code=504,
+            detail="The node did not finish restarting in time; "
+            "check its status before saving again.",
         )
+    except Exception as exc:
+        # Bare `except` hid the reason from the admin AND from the log. The
+        # node rejects a config it cannot build, and that is worth reading.
+        logger.error("node %s rejected the new %s config: %s", node_id, backend, exc)
+        raise HTTPException(status_code=502, detail=f"Node error: {exc}")
     return {}
